@@ -1,0 +1,39 @@
+version: '3.4'
+
+services:
+    db:
+        image: mysql:5.7.22
+        command: --character-set-server=utf8mb4
+        environment:
+            MYSQL_USER: dbuser
+            MYSQL_PASSWORD: dbpass
+            MYSQL_ROOT_PASSWORD: dbpass
+            MYSQL_DATABASE: melon_api_development
+        volumes:
+            - ./dump:/docker-entrypoint-initdb.d
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - 8081:80
+        links:
+            - db
+    web:
+        tty: true
+        stdin_open: true
+        command: sh /docker-entrypoint.sh
+        build: ./docker
+        links:
+            - db
+        ports:
+            - 8000:8000
+            - 443:443
+        environment:
+            APP_DEBUG: 'true'
+            XDEBUG_MODE: coverage
+            PATH: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/app/vendor/bin
+        volumes:
+            - .:/app:cached
+            - ./docker/supervisor/:/etc/supervisor.d/
+            # - composer_caches:/app/vendor
+volumes:
+    composer_caches:
